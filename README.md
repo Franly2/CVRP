@@ -1,6 +1,22 @@
 # VRP Fleet Management & Delivery Optimization
 
 ## 🚀 Project Overview
+*"Saya menggunakan pendekatan Two-Phase Heuristic, Pak/Bu.
+
+Fase 1 (Clustering): Menggunakan K-Means untuk mengelompokkan pengiriman berdasarkan zonasi wilayah agar beban kerja kurir terbagi merata.
+
+Fase 2 (Routing): Menggunakan Genetic Algorithm di setiap klaster untuk menentukan urutan pengiriman termurah dengan batasan kapasitas kendaraan (Multi-Trip)."*
+
+Penyelesaian Masalah Capacitated Vehicle Routing Problem (CVRP) dengan Model Multi-Trip Menggunakan Integrasi K-Means dan Algoritma Genetik
+"CVRP adalah masalah penentuan rute pengiriman terpendek, di mana setiap kendaraan memiliki batas kapasitas angkut maksimal yang tidak boleh dilanggar."
+Q: Masalahnya apa?
+A: "Masalahnya adalah bagaimana membagi ribuan paket ke armada kurir yang terbatas, di mana kurir harus bolak-balik (multi-trip) ke gudang karena kapasitas motor kecil, namun total jarak tempuhnya harus seminimal mungkin."
+
+Q: Kenapa pakai Dummy Map/Koordinat X,Y?
+A: "Untuk memvalidasi akurasi algoritma Genetic Algorithm dalam lingkungan yang terkontrol (terisolasi dari faktor macet real-time), sehingga efisiensi rute murni diukur dari logika komputasinya."
+
+Q: Outputnya apa?
+A: "Aplikasi Dashboard yang memvisualisasikan hasil optimasi rute berupa grafik plot (Scatter Plot), lengkap dengan pembagian batch pengiriman per kurir."
 
 This project is a **Vehicle Routing Problem (VRP) application** designed for logistics and delivery optimization.  
 It helps companies manage fleets of drivers, generate optimized delivery routes, and track driver locations in real-time.  

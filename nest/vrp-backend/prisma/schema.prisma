@@ -1,12 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -14,27 +7,101 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// --- ENUMS ---
 enum Role {
   DRIVER
   ADMIN
 }
 
+enum PackageStatus {
+  PENDING     // Belum diapa-apain (Masih di gudang)
+  ASSIGNED    // Sudah masuk ke rute (Hasil Sweep Algo)
+  DELIVERED   // Sudah sampai
+  FAILED      // Gagal kirim
+}
+
+enum RouteStatus {
+  ACTIVE      // Sedang jalan
+  COMPLETED   // Selesai
+}
+
+
 model User {
-  id             String                       @id @default(uuid())
-  username       String @db.VarChar(20)       @unique
+  id             String          @id @default(uuid())
+  username       String          @unique @db.VarChar(20)
   password       String
-  role           Role                         @default(DRIVER)
-  createdAt      DateTime                     @default(now())
-  updatedAt      DateTime                     @updatedAt
+  role           Role            @default(DRIVER)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  // Relasi ke tabel lain
   driverLocation DriverLocation?
+  vehicle        Vehicle?        // 1 Driver punya 1 Kendaraan
+  routes         Route[]         // 1 Driver bisa punya histori banyak rute
 }
 
 model DriverLocation {
-  id          String    @id @default(uuid())
-  userId      String    @unique
-  user        User      @relation(fields: [userId], references: [id])
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
   lat         Float
   lng         Float
-  lastUpdated DateTime  @default(now())
+  lastUpdated DateTime @default(now())
 }
 
+// 🔥 VEHICLE (PENTING BUAT CONSTRAINT)
+// Algoritma Sweep butuh tau kapasitas motor biar tas gak jebol
+model Vehicle {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  
+  plateNumber String   @unique
+  model       String   // cth: "Honda Beat", "Grand Max"
+  
+  maxWeight   Float    // Kapasitas Berat (kg) -> Constraint algoritma
+  maxVolume   Float    // Kapasitas Volume (liter) -> Constraint algoritma
+}
+
+// 🔥 PACKAGE (INPUT DATA UNTUK SWEEP ALGO)
+model Package {
+  id            String        @id @default(uuid())
+  recipientName String
+  address       String        @db.Text
+  
+  // Koordinat (Wajib ada buat Sweep Algorithm hitung sudut)
+  lat           Float
+  lng           Float
+  
+  weight        Float         // Berat paket (kg) buat cek kapasitas vehicle
+  status        PackageStatus @default(PENDING)
+
+  // Relasi ke Rute (Hasil Algoritma)
+  routeId       String?
+  route         Route?        @relation(fields: [routeId], references: [id])
+  
+  // 🔥 ORDER INDEX (Wajib ada buat nyimpen urutan A -> B -> C)
+  // Ini hasil dari Nearest Neighbor / 2-Opt
+  orderIndex    Int?          
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// 🔥 ROUTE (OUTPUT DATA DARI ALGORITMA)
+// Ini kayak "Surat Jalan" buat kurir
+model Route {
+  id            String      @id @default(uuid())
+  
+  driverId      String
+  driver        User        @relation(fields: [driverId], references: [id])
+  
+  status        RouteStatus @default(ACTIVE)
+  
+  // List paket yang harus diantar di rute ini
+  packages      Package[]
+  
+  // Info tambahan buat laporan
+  totalDistance Float?      // Estimasi jarak total (km)
+  date          DateTime    @default(now())
+}
